@@ -10,6 +10,10 @@ In the ogg file, segment will split into the page
 Each page have header to help you know the current bitstream
 The target of this code is to valid the segment and push
 to valid_segments
+
+Technically, you just need bitstream_serial_number to verify
+page_segments to read how many pages and seg_table to read the segment
+table
 ]]
 
 local function readTableByTable(buffer)
@@ -115,7 +119,7 @@ header_size             | %s]]
 end
 
 local fs = require('fs')
-local fileData = fs.readFileSync("../sample/speech_orig.ogg")
+local fileData = fs.readFileSync("./sample/speech_orig.ogg")
 
 local temp = nil
 while #fileData > current_offset do
@@ -126,4 +130,4 @@ p('Total valid segments: ', #valid_segments)
 p('Total invalid segments: ', #invalid_segments)
 p('Please check if code missing any content: ', current_offset, #fileData)
 
-fs.writeFileSync('../results/speech_orig.ogg.segment', table.concat(valid_segments, '\n\n'))
+fs.writeFileSync('./results/speech_orig.ogg.segment', table.concat(valid_segments, ''))

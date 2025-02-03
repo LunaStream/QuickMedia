@@ -1,0 +1,3 @@
+return {
+  OggDemuxer = require('./OggDemuxer')
+}
