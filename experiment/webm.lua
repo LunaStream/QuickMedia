@@ -1,5 +1,5 @@
 local fs = require('fs')
-local file_data = fs.readFileSync('../sample/speech_orig.webm')
+local file_data = fs.readFileSync('./sample/videoplayback.webm')
 
 local ebmlFound = false
 local result = nil
@@ -92,7 +92,6 @@ local function readTag(data, offset)
   local idData = readEBMLId(data, offset)
   if idData == "TOO_SHORT" then return "TOO_SHORT" end
   pass = pass + 1
-  p(idData)
   local ebmlID = idData.id
   if not ebmlFound then
     if ebmlID == "\026E\223\163" then ebmlFound = true
@@ -104,7 +103,6 @@ local function readTag(data, offset)
   -- Read header tag data size
   local sizeData = readTagDataSize(data, offset)
   if sizeData == "TOO_SHORT" then return "TOO_SHORT" end
-  p('Size data: ', sizeData)
   pass = pass + 1
   offset = sizeData.offset
 
@@ -145,7 +143,7 @@ local function readTag(data, offset)
   elseif ebmlID == '\163' then
     if not _track then error('No audio track in this webm!') end
     if bit.band(string.byte(process_data, 1, 1), 0xF) == _track.number then
-      table.insert(processed, string.sub(process_data, 4))
+      table.insert(processed, string.sub(process_data, 5, #process_data - 1))
     end
   end
   pass = pass + 1
@@ -184,4 +182,4 @@ p('Variable _incompleteTrack', _incompleteTrack)
 p('Variable processed: ', #processed)
 p()
 
-fs.writeFileSync('../results/speech_orig.webm.segment', table.concat(processed, '\n\n'))
+fs.writeFileSync('./results/videoplayback.raw.opus', table.concat(processed, ''))

@@ -7,12 +7,11 @@ function OggDemuxer:initialize()
   self.bitstream_serial_number = nil
   self.head_detected = nil
   self.remind_buffer = nil
-  self:on('unknownSegment', function (segment)
-    p('Unknown segment: ', string.sub(segment, 1, 10))
-  end)
+  self.num = 1
 end
 
 function OggDemuxer:_transform(chunk, done)
+  p('Current process chunk: ', #chunk)
   if self.remind_buffer and #self.remind_buffer > 0 then
     chunk = self.remind_buffer .. chunk
     self.remind_buffer = nil
@@ -25,8 +24,7 @@ function OggDemuxer:_transform(chunk, done)
       done(result)
       return
     end
-    p('Next Part: ', (#result > 10) and string.sub(result, 1, 10) or 'Not avaliable')
-    if result and #result > 0 then chunk = result
+    if #result > 0 then chunk = result
     else break end
   end
   self.remind_buffer = chunk
@@ -67,7 +65,8 @@ function OggDemuxer:readPage(chunk)
       if header == "OpusTags" then
         self:emit('tags', segment)
       elseif self.bitstream_serial_signature == bitstream_serial_number then
-        self:push(segment)
+        self:push(self.num .. '. ' .. segment .. '\n\n')
+        self.num = self.num + 1
       end
     elseif header == 'OpusHead' then
       self:emit('head', segment);

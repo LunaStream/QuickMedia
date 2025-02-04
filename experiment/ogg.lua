@@ -4,6 +4,7 @@ local bitstream_serial_signature = nil
 local valid_segments = {}
 local invalid_segments = {}
 local current_offset = 0
+local num = 1
 
 --[[
 In the ogg file, segment will split into the page
@@ -74,33 +75,34 @@ number_page_segments    | %s
 page_segments           | %s
 header_size             | %s]]
 
-  print(string.format(template,
-    capture_pattern,
-    version,
-    header_type_flagsion,
-    granule_position,
-    bitstream_serial_number,
-    page_sequence_number,
-    CRC_checksum,
-    number_page_segments,
-    page_segments,
-    header_size,
-    seg_table
-  ))
-  p('Total seg sizes: ', totalSize)
-  p('Sizes: ', sizes)
+  -- print(string.format(template,
+  --   capture_pattern,
+  --   version,
+  --   header_type_flagsion,
+  --   granule_position,
+  --   bitstream_serial_number,
+  --   page_sequence_number,
+  --   CRC_checksum,
+  --   number_page_segments,
+  --   page_segments,
+  --   header_size,
+  --   seg_table
+  -- ))
+  -- p('Total seg sizes: ', totalSize)
+  p(sizes)
 
   local start = 28 + page_segments
 
-  p('-------------------------------------------')
+  -- p('-------------------------------------------')
   for _, size in pairs(sizes) do
     local segment = string.sub(buffer, start, start + size)
     local header = string.sub(segment, 1, 8)
-    p('Preview segment: ', string.sub(segment, 1, 10))
+    -- p('Preview segment: ', string.sub(segment, 1, 10))
     if head_detected then
       if header == "OpusTags" then p('Hey, this is opus tag :O')
       elseif bitstream_serial_signature == bitstream_serial_number then
-        table.insert(valid_segments, segment)
+        table.insert(valid_segments, num .. '. ' .. segment .. '\n\n')
+        num = num + 1
       end
     elseif header == 'OpusHead' then
       head_detected = segment
@@ -110,16 +112,16 @@ header_size             | %s]]
     end
     start = start + size;
   end
-  p('-------------------------------------------')
+  -- p('-------------------------------------------')
 
-  p('Preview: ', string.sub(buffer, start, start + 20))
-  p('New offset: ', start)
+  -- p('Preview: ', string.sub(buffer, start, start + 20))
+  -- p('New offset: ', start)
   current_offset = current_offset + start
   return string.sub(buffer, start)
 end
 
 local fs = require('fs')
-local fileData = fs.readFileSync("./sample/speech_orig.ogg")
+local fileData = fs.readFileSync("./sample/speech.ogg")
 
 local temp = nil
 while #fileData > current_offset do
@@ -130,4 +132,4 @@ p('Total valid segments: ', #valid_segments)
 p('Total invalid segments: ', #invalid_segments)
 p('Please check if code missing any content: ', current_offset, #fileData)
 
-fs.writeFileSync('./results/speech_orig.ogg.segment', table.concat(valid_segments, ''))
+fs.writeFileSync('./results/speech.ogg.json.debug.1', table.concat(valid_segments, ''))
