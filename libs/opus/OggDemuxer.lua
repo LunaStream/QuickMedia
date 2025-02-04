@@ -7,11 +7,9 @@ function OggDemuxer:initialize()
   self.bitstream_serial_number = nil
   self.head_detected = nil
   self.remind_buffer = nil
-  self.num = 1
 end
 
 function OggDemuxer:_transform(chunk, done)
-  p('Current process chunk: ', #chunk)
   if self.remind_buffer and #self.remind_buffer > 0 then
     chunk = self.remind_buffer .. chunk
     self.remind_buffer = nil
@@ -20,7 +18,6 @@ function OggDemuxer:_transform(chunk, done)
   while chunk do
     local success, result = pcall(self.readPage, self, chunk)
     if not success then
-      p('Error:', result)
       done(result)
       return
     end
@@ -57,17 +54,19 @@ function OggDemuxer:readPage(chunk)
     totalSize = totalSize + size
   end
 
+  p(sizes)
+
   local start = 28 + page_segments
+  -- Verification
+  local passed_frame = {}
   for _, size in pairs(sizes) do
-    local segment = string.sub(chunk, start, start + size)
+    local segment = string.sub(chunk, start, start + size - 1)
     local header = string.sub(segment, 1, 8)
     if self.head_detected then
       if header == "OpusTags" then
         self:emit('tags', segment)
       elseif self.bitstream_serial_signature == bitstream_serial_number and #segment > 0 then
-        self:push(segment)
-        p('<<< Req: ', segment:sub(1, 30))
-        self.num = self.num + 1
+        table.insert(passed_frame, segment)
       end
     elseif header == 'OpusHead' then
       self:emit('head', segment);
@@ -77,6 +76,14 @@ function OggDemuxer:readPage(chunk)
       self:emit('unknownSegment', segment);
     end
     start = start + size;
+  end
+
+  if #passed_frame == 0 then return string.sub(chunk, start) end
+  if #passed_frame ~= #sizes then return '' end
+
+  -- Push data
+  for _, seg in pairs(passed_frame) do
+    self:push(seg)
   end
 
   return string.sub(chunk, start)

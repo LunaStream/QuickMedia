@@ -10,7 +10,6 @@ function CustomWriteStream:initialize()
 end
 
 function CustomWriteStream:_transform(chunk, done)
-  p('>>> Res: ', chunk:sub(1, 30))
   fs.writeSync(self.fd, -1, chunk)
   done(nil)
 end
