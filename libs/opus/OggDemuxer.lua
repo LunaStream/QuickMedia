@@ -64,8 +64,9 @@ function OggDemuxer:readPage(chunk)
     if self.head_detected then
       if header == "OpusTags" then
         self:emit('tags', segment)
-      elseif self.bitstream_serial_signature == bitstream_serial_number then
-        self:push(self.num .. '. ' .. segment .. '\n\n')
+      elseif self.bitstream_serial_signature == bitstream_serial_number and #segment > 0 then
+        self:push(segment)
+        p('<<< Req: ', segment:sub(1, 30))
         self.num = self.num + 1
       end
     elseif header == 'OpusHead' then
