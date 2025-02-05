@@ -1,3 +1,4 @@
 return {
-  OggDemuxer = require('./OggDemuxer')
+  OggDemuxer = require('./OggDemuxer'),
+  WebmDemuxer = require('./WebmDemuxer')
 }

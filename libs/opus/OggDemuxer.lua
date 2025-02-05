@@ -2,6 +2,12 @@ local Transform = require('stream').Transform
 
 local OggDemuxer = Transform:extend()
 
+local OGG_PAGE_HEADER_SIZE = 27;
+local STREAM_STRUCTURE_VERSION = 0;
+local OGGS_HEADER = 'OggS'
+local OPUS_HEAD = 'OpusHead'
+local OPUS_TAGS = 'OpusTags'
+
 function OggDemuxer:initialize()
   Transform.initialize(self)
   self.bitstream_serial_number = nil
@@ -29,6 +35,15 @@ function OggDemuxer:_transform(chunk, done)
 end
 
 function OggDemuxer:readPage(chunk)
+  if #chunk < OGG_PAGE_HEADER_SIZE then
+    return false
+  end
+
+  local capture_pattern = string.sub(chunk, 1, 4)
+  assert(capture_pattern == OGGS_HEADER, 'capture_pattern is not ' .. OGGS_HEADER)
+  local version = string.byte(chunk, 5)
+  assert(version == STREAM_STRUCTURE_VERSION, 'stream_structure_version is not ' .. STREAM_STRUCTURE_VERSION)
+
   local bitstream_serial_number = string.unpack("<I4", chunk, 15)
   local page_segments = string.unpack("<I1", chunk, 27)
   local seg_table = string.sub(chunk, 28, 28 + page_segments)
@@ -54,8 +69,6 @@ function OggDemuxer:readPage(chunk)
     totalSize = totalSize + size
   end
 
-  p(sizes)
-
   local start = 28 + page_segments
   -- Verification
   local passed_frame = {}
@@ -63,12 +76,12 @@ function OggDemuxer:readPage(chunk)
     local segment = string.sub(chunk, start, start + size - 1)
     local header = string.sub(segment, 1, 8)
     if self.head_detected then
-      if header == "OpusTags" then
+      if header == OPUS_TAGS then
         self:emit('tags', segment)
       elseif self.bitstream_serial_signature == bitstream_serial_number and #segment > 0 then
         table.insert(passed_frame, segment)
       end
-    elseif header == 'OpusHead' then
+    elseif header == OPUS_HEAD then
       self:emit('head', segment);
       self.head_detected = segment
       self.bitstream_serial_signature = bitstream_serial_number
@@ -89,12 +102,12 @@ function OggDemuxer:readPage(chunk)
   return string.sub(chunk, start)
 end
 
-function OggDemuxer:_destroy(err, cb)
+function OggDemuxer:destroy(err, cb)
   self:_cleanup()
   return cb and cb(err) or nil
 end
 
-function OggDemuxer:_final(cb)
+function OggDemuxer:final(cb)
   self:_cleanup()
   return cb()
 end

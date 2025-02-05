@@ -75,20 +75,20 @@ number_page_segments    | %s
 page_segments           | %s
 header_size             | %s]]
 
-  -- print(string.format(template,
-  --   capture_pattern,
-  --   version,
-  --   header_type_flagsion,
-  --   granule_position,
-  --   bitstream_serial_number,
-  --   page_sequence_number,
-  --   CRC_checksum,
-  --   number_page_segments,
-  --   page_segments,
-  --   header_size,
-  --   seg_table
-  -- ))
-  -- p('Total seg sizes: ', totalSize)
+  print(string.format(template,
+    capture_pattern,
+    version,
+    header_type_flagsion,
+    granule_position,
+    bitstream_serial_number,
+    page_sequence_number,
+    CRC_checksum,
+    number_page_segments,
+    page_segments,
+    header_size,
+    seg_table
+  ))
+  p('Total seg sizes: ', totalSize)
   p(sizes)
 
   local start = 28 + page_segments
@@ -121,7 +121,7 @@ header_size             | %s]]
 end
 
 local fs = require('fs')
-local fileData = fs.readFileSync("./sample/speech.ogg")
+local fileData = fs.readFileSync("./lab/sample/speech.ogg")
 
 local temp = nil
 while #fileData > current_offset do
@@ -132,4 +132,4 @@ p('Total valid segments: ', #valid_segments)
 p('Total invalid segments: ', #invalid_segments)
 p('Please check if code missing any content: ', current_offset, #fileData)
 
-fs.writeFileSync('./results/speech.ogg.json.debug.1', table.concat(valid_segments, ''))
+fs.writeFileSync('./lab/resexp/speech.ogg.demux', table.concat(valid_segments, ''))

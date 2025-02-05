@@ -6,7 +6,7 @@ local CustomWriteStream = Transform:extend()
 
 function CustomWriteStream:initialize()
   Transform.initialize(self)
-  self.fd = fs.openSync('./results/speech.ogg.json.debug.2', 'w')
+  self.fd = fs.openSync('./lab/results/videoplayback.webm.demux', 'w')
 end
 
 function CustomWriteStream:_transform(chunk, done)
@@ -14,6 +14,6 @@ function CustomWriteStream:_transform(chunk, done)
   done(nil)
 end
 
-fs.createReadStream('./sample/speech.ogg')
-  :pipe(prism_opus.OggDemuxer:new())
+fs.createReadStream('./lab/sample/videoplayback.webm')
+  :pipe(prism_opus.WebmDemuxer:new())
   :pipe(CustomWriteStream:new())

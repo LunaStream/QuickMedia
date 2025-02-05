@@ -1,5 +1,5 @@
 local fs = require('fs')
-local file_data = fs.readFileSync('./sample/videoplayback.webm')
+local file_data = fs.readFileSync('./lab/sample/videoplayback.webm')
 
 local ebmlFound = false
 local result = nil
@@ -112,6 +112,7 @@ local function readTag(data, offset)
     if #data > offset + dataLength then
       return { offset = offset + dataLength, pass = pass };
     end
+    p('Skip util lol')
     return { offset = offset, skipUntil = count + offset + dataLength, pass = pass };
   end
   pass = pass + 1
@@ -182,4 +183,4 @@ p('Variable _incompleteTrack', _incompleteTrack)
 p('Variable processed: ', #processed)
 p()
 
-fs.writeFileSync('./results/videoplayback.raw.opus', table.concat(processed, ''))
+fs.writeFileSync('./lab/resexp/videoplayback.webm.demux', table.concat(processed, ''))

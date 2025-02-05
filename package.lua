@@ -10,9 +10,6 @@
     files = {
       "**.lua",
       "!test*",
-      "!test_case*",
-      "!sample*",
-      "!results*",
-      "!experiment*",
+      "!lab*",
     }
   }
