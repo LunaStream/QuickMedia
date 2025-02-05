@@ -4,7 +4,6 @@ local bitstream_serial_signature = nil
 local valid_segments = {}
 local invalid_segments = {}
 local current_offset = 0
-local num = 1
 
 --[[
 In the ogg file, segment will split into the page
@@ -95,14 +94,13 @@ header_size             | %s]]
 
   -- p('-------------------------------------------')
   for _, size in pairs(sizes) do
-    local segment = string.sub(buffer, start, start + size)
+    local segment = string.sub(buffer, start, start + size - 1)
     local header = string.sub(segment, 1, 8)
     -- p('Preview segment: ', string.sub(segment, 1, 10))
     if head_detected then
       if header == "OpusTags" then p('Hey, this is opus tag :O')
       elseif bitstream_serial_signature == bitstream_serial_number then
-        table.insert(valid_segments, num .. '. ' .. segment .. '\n\n')
-        num = num + 1
+        table.insert(valid_segments, segment)
       end
     elseif header == 'OpusHead' then
       head_detected = segment
