@@ -1,6 +1,7 @@
 local fs = require('fs')
 local prism_opus = require('opus')
-local Transform = require('stream').Transform
+local stream = require('stream')
+local Transform = stream.Transform
 
 local CustomWriteStream = Transform:extend()
 
