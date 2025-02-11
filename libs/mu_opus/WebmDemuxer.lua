@@ -1,9 +1,9 @@
-local WebmBaseDemuxer = require('base/WebmBaseDemuxer')
+local WebmBase = require('mu_core/WebmBase')
 
-local WebmDemuxer = WebmBaseDemuxer:extend()
+local WebmDemuxer = WebmBase:extend()
 
 function WebmDemuxer:initialize()
-  WebmBaseDemuxer.initialize(self)
+  WebmBase.initialize(self)
 end
 
 function WebmDemuxer:_checkHead(data)

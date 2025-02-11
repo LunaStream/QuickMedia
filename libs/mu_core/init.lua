@@ -1,0 +1,3 @@
+return {
+  PCMStream = require('./PCMStream')
+}

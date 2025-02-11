@@ -1,6 +1,6 @@
 local Transform = require('stream').Transform
 
-local WebmBaseDemuxer = Transform:extend()
+local WebmBase = Transform:extend()
 
 local TAGS = {
   ['\026E\223\163'] = true, -- EBML (1a45dfa3)
@@ -16,7 +16,7 @@ local TAGS = {
 
 local stop = false
 
-function WebmBaseDemuxer:initialize()
+function WebmBase:initialize()
   Transform.initialize(self)
   self.count = 1
   self.length = 0
@@ -28,11 +28,11 @@ function WebmBaseDemuxer:initialize()
   self.chunk_debug = nil
 end
 
-function WebmBaseDemuxer:_checkHead(data)
+function WebmBase:_checkHead(data)
   error('checkHead not yet implemented')
 end
 
-function WebmBaseDemuxer:_transform(chunk, done)
+function WebmBase:_transform(chunk, done)
   self.length = self.length + #chunk
 
   if self.remind_buffer and #self.remind_buffer > 0 then
@@ -78,7 +78,7 @@ function WebmBaseDemuxer:_transform(chunk, done)
   done(nil)
 end
 
-function WebmBaseDemuxer:readTag(data, offset)
+function WebmBase:readTag(data, offset)
   local idData = self:readEBMLId(data, offset)
   if idData == "TOO_SHORT" then return "TOO_SHORT" end
   local ebmlID = idData.id
@@ -135,7 +135,7 @@ function WebmBaseDemuxer:readTag(data, offset)
   return { offset = offset + dataLength }
 end
 
-function WebmBaseDemuxer:readEBMLId(data, t_offset)
+function WebmBase:readEBMLId(data, t_offset)
   local idLength = self:vintLength(data, t_offset)
   if idLength == "TOO_SHORT" then return "TOO_SHORT" end
   return {
@@ -144,7 +144,7 @@ function WebmBaseDemuxer:readEBMLId(data, t_offset)
   }
 end
 
-function WebmBaseDemuxer:readTagDataSize(data, t_offset)
+function WebmBase:readTagDataSize(data, t_offset)
   local sizeLength = self:vintLength(data, t_offset)
   if sizeLength == "TOO_SHORT" then return "TOO_SHORT" end
   local dataLength = self:expandVint(data, t_offset, t_offset + sizeLength)
@@ -155,7 +155,7 @@ function WebmBaseDemuxer:readTagDataSize(data, t_offset)
   }
 end
 
-function WebmBaseDemuxer:vintLength(buffer, index)
+function WebmBase:vintLength(buffer, index)
   if index < 1 or index > #buffer then
     return "TOO_SHORT"
   end
@@ -176,7 +176,7 @@ function WebmBaseDemuxer:vintLength(buffer, index)
   return i
 end
 
-function WebmBaseDemuxer:expandVint(buffer, start, _end)
+function WebmBase:expandVint(buffer, start, _end)
   local length = self:vintLength(buffer, start)  -- Assuming vintLength returns the length
   if _end > #buffer or length == "TOO_SHORT" then
     return "TOO_SHORT"
@@ -192,4 +192,4 @@ function WebmBaseDemuxer:expandVint(buffer, start, _end)
   return value
 end
 
-return WebmBaseDemuxer
+return WebmBase

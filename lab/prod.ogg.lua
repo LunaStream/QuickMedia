@@ -1,5 +1,5 @@
 local fs = require('fs')
-local prism_opus = require('opus')
+local mu_opus = require('mu_opus')
 local stream = require('stream')
 local Transform = stream.Transform
 
@@ -16,5 +16,5 @@ function CustomWriteStream:_transform(chunk, done)
 end
 
 fs.createReadStream('./lab/sample/speech.ogg')
-  :pipe(prism_opus.OggDemuxer:new())
+  :pipe(mu_opus.OggDemuxer:new())
   :pipe(CustomWriteStream:new())

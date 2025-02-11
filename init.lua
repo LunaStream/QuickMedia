@@ -1,4 +1,4 @@
 return {
-  opus = require('opus'),
-  vorbis = require('vorbis')
+  core = require('mu_core'),
+  opus = require('mu_opus'),
 }
