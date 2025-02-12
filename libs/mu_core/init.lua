@@ -1,3 +1,3 @@
 return {
-  PCMStream = require('./PCMStream')
+  WebmBase = require('./WebmBase')
 }
