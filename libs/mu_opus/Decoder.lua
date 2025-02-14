@@ -40,6 +40,7 @@ function Decoder:_transform(chunk, done)
     return done(pcm)
   end
   self:push(ffi.string(pcm, self.options.maxFrameSize))
+  pcm = nil
   return done();
 end
 

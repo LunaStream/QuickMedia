@@ -14,8 +14,6 @@ local TAGS = {
   ['c\162'] = false, -- (63a2)
 }
 
-local stop = false
-
 function WebmBase:initialize()
   Transform.initialize(self)
   self.count = 1
@@ -26,6 +24,21 @@ function WebmBase:initialize()
   self._incompleteTrack = {}
   self.remind_buffer = nil
   self.chunk_debug = nil
+  self:on('end', function ()
+    coroutine.wrap(self.freeMem)(self)
+  end)
+end
+
+function WebmBase:freeMem()
+  self.count = 1
+  self.length = 0
+  self.ebmlFound = false
+  self.skipUntil = nil
+  self._track = nil
+  self._incompleteTrack = {}
+  self.remind_buffer = nil
+  self.chunk_debug = nil
+  collectgarbage("collect")
 end
 
 function WebmBase:_checkHead(data)
@@ -50,7 +63,6 @@ function WebmBase:_transform(chunk, done)
     done()
     return
   end
-  -- if stop then return done(nil) end
 
   local result = nil
   while result ~= "TOO_SHORT" do
@@ -74,7 +86,6 @@ function WebmBase:_transform(chunk, done)
   self.count = self.count + offset
   self.remind_buffer = string.sub(chunk, offset)
 
-  stop = true
   done(nil)
 end
 

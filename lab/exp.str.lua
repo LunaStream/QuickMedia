@@ -1,6 +1,6 @@
 local fs = require('fs')
 local setInterval = require('timer').setInterval
-local prism_opus = require('opus')
+local prism_opus = require('mu_opus')
 local stream = require('stream')
 local Transform = stream.Transform
 
@@ -13,6 +13,7 @@ function CustomReadableTransform:initialize()
 end
 
 function CustomReadableTransform:_transform(chunk, done)
+  print('Pushed: ', #chunk)
   table.insert(self.buffer_cache, chunk)
   done(nil)
 end
@@ -27,9 +28,16 @@ function CustomReadableTransform:exRead()
   return res
 end
 
+local te = CustomReadableTransform:new()
+
+te:on('end', function ()
+  print('Finished transform')
+end)
+
 local pre_stream = fs.createReadStream('./lab/sample/speech.ogg')
   :pipe(prism_opus.OggDemuxer:new())
-  :pipe(CustomReadableTransform:new())
+  :pipe(te)
+
 
 setInterval(200, function ()
   coroutine.wrap(function()
