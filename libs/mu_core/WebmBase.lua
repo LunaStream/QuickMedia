@@ -111,7 +111,7 @@ function WebmBase:readTag(data, offset)
     if #data > offset + dataLength then
       return { offset = offset + dataLength }
     end
-    return { offset = offset, skipUntil = self.count + offset + dataLength }
+    return { offset = offset, skipUntil = self.count + offset + dataLength + 1 }
   end
 
   local tagHasChildren = TAGS[ebmlID]
@@ -119,7 +119,7 @@ function WebmBase:readTag(data, offset)
     return { offset = offset }
   end
 
-  if offset + dataLength > #data then return 'TOO_SHORT' end
+  if (dataLength == 'TOO_SHORT') or (offset + dataLength > #data) then return 'TOO_SHORT' end
   local process_data = string.sub(data, offset, offset + dataLength)
   if not self._track then
     if ebmlID == '\174' then self._incompleteTrack = {} end
@@ -188,13 +188,13 @@ function WebmBase:vintLength(buffer, index)
 end
 
 function WebmBase:expandVint(buffer, start, _end)
-  local length = self:vintLength(buffer, start)  -- Assuming vintLength returns the length
+  local length = self:vintLength(buffer, start)
   if _end > #buffer or length == "TOO_SHORT" then
     return "TOO_SHORT"
   end
 
-  local mask = (bit.lshift(1, 8 - length)) - 1  -- bit32.lshift for bit shifting
-  local value = bit.band(string.byte(buffer, start), mask)  -- band for bitwise AND
+  local mask = (bit.lshift(1, 8 - length)) - 1
+  local value = bit.band(string.byte(buffer, start), mask)
 
   for i = start + 1, _end - 1 do
     value = bit.lshift(value, 8) + string.byte(buffer, i)  -- left shift by 8, then add next byte
