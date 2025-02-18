@@ -15,7 +15,7 @@ local TAGS = {
 }
 
 function WebmBase:initialize()
-  Transform.initialize(self)
+  Transform.initialize(self, { objectMode = true })
   self.count = 1
   self.length = 0
   self.ebmlFound = false
@@ -46,6 +46,12 @@ function WebmBase:_checkHead(data)
 end
 
 function WebmBase:_transform(chunk, done)
+  if type(chunk) == "table" then
+    self:push(chunk)
+    done()
+    return
+  end
+
   self.length = self.length + #chunk
 
   if self.remind_buffer and #self.remind_buffer > 0 then

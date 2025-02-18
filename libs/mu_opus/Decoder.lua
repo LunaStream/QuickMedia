@@ -11,7 +11,7 @@ local default_options = {
 }
 
 function Decoder:initialize(opus_path, options)
-  Transform.initialize(self)
+  Transform.initialize(self, { objectMode = true })
   self.options = options or {}
 
   for key, value in pairs(default_options) do
@@ -29,6 +29,13 @@ function Decoder:initialize(opus_path, options)
 end
 
 function Decoder:_transform(chunk, done)
+  if type(chunk) == "table" or type(chunk) == "nil" then
+    p(type(chunk))
+    self:push(chunk)
+    done()
+    return
+  end
+
   local success, pcm = pcall(
     self.decoder.decode,
     self.decoder,
