@@ -30,7 +30,6 @@ end
 
 function Decoder:_transform(chunk, done)
   if type(chunk) == "table" or type(chunk) == "nil" then
-    p(type(chunk))
     self:push(chunk)
     done()
     return
