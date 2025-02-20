@@ -46,7 +46,7 @@ function WebmBase:_checkHead(data)
 end
 
 function WebmBase:_transform(chunk, done)
-  if type(chunk) == "table" then
+  if type(chunk) ~= "string" then
     self:push(chunk)
     done()
     return

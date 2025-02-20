@@ -29,7 +29,7 @@ function Decoder:initialize(opus_path, options)
 end
 
 function Decoder:_transform(chunk, done)
-  if type(chunk) == "table" or type(chunk) == "nil" then
+  if type(chunk) ~= "string" then
     self:push(chunk)
     done()
     return
