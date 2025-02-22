@@ -38,7 +38,9 @@ function OggDemuxer:_transform(chunk, done)
 end
 
 function OggDemuxer:readPage(chunk)
-  if #chunk < OGG_PAGE_HEADER_SIZE then return false end
+  if #chunk < OGG_PAGE_HEADER_SIZE then
+    return false
+  end
 
   local capture_pattern = string.sub(chunk, 1, 4)
   assert(capture_pattern == OGGS_HEADER, 'capture_pattern is not ' .. OGGS_HEADER)
@@ -58,7 +60,9 @@ function OggDemuxer:readPage(chunk)
     local x = 255
 
     while x == 255 do
-      if i > #seg_table then return false end
+      if i > #seg_table then
+        return false
+      end
       x = string.byte(seg_table, i) -- string.byte returns the byte value at position i
       i = i + 1
       size = size + x
@@ -90,11 +94,17 @@ function OggDemuxer:readPage(chunk)
     start = start + size;
   end
 
-  if #passed_frame == 0 then return string.sub(chunk, start) end
-  if #passed_frame ~= #sizes then return '' end
+  if #passed_frame == 0 then
+    return string.sub(chunk, start)
+  end
+  if #passed_frame ~= #sizes then
+    return ''
+  end
 
   -- Push data
-  for _, seg in pairs(passed_frame) do self:push(seg) end
+  for _, seg in pairs(passed_frame) do
+    self:push(seg)
+  end
 
   return string.sub(chunk, start)
 end

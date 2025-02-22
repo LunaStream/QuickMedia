@@ -28,7 +28,11 @@ timer.setTimeout(
   7000, coroutine.wrap(
     function()
       local pcm = mu_core.PCMStream:new()
-      pcm:on('raw-pcm-data', function(chunk) p(#chunk) end)
+      pcm:on(
+        'raw-pcm-data', function(chunk)
+          p(#chunk)
+        end
+      )
       p('Voice EXP: Now play the song')
       audioStream:pipe(pcm)
     end

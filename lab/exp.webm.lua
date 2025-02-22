@@ -23,16 +23,22 @@ local TAGS = {
 }
 
 local function vintLength(buffer, index)
-  if index < 1 or index > #buffer then return "TOO_SHORT" end
+  if index < 1 or index > #buffer then
+    return "TOO_SHORT"
+  end
 
   local i = 0
   for j = 0, 7 do
-    if bit.band(bit.lshift(1, 7 - j), string.byte(buffer, index)) ~= 0 then break end
+    if bit.band(bit.lshift(1, 7 - j), string.byte(buffer, index)) ~= 0 then
+      break
+    end
     i = i + 1
   end
   i = i + 1
 
-  if index + i - 1 > #buffer then return "TOO_SHORT" end
+  if index + i - 1 > #buffer then
+    return "TOO_SHORT"
+  end
 
   return i
 end
@@ -42,7 +48,9 @@ end
 
 local function expandVint(buffer, start, _end)
   local length = vintLength(buffer, start) -- Assuming vintLength returns the length
-  if _end > #buffer or length == "TOO_SHORT" then return "TOO_SHORT" end
+  if _end > #buffer or length == "TOO_SHORT" then
+    return "TOO_SHORT"
+  end
 
   local mask = (bit.lshift(1, 8 - length)) - 1 -- bit32.lshift for bit shifting
   local value = bit.band(string.byte(buffer, start), mask) -- band for bitwise AND
@@ -56,7 +64,9 @@ end
 
 local function readEBMLId(data, t_offset)
   local idLength = vintLength(data, t_offset)
-  if idLength == "TOO_SHORT" then return "TOO_SHORT" end
+  if idLength == "TOO_SHORT" then
+    return "TOO_SHORT"
+  end
   return {
     id = string.sub(data, t_offset, t_offset + idLength - 1),
     offset = t_offset + idLength,
@@ -65,7 +75,9 @@ end
 
 local function readTagDataSize(data, t_offset)
   local sizeLength = vintLength(data, t_offset);
-  if sizeLength == "TOO_SHORT" then return "TOO_SHORT" end
+  if sizeLength == "TOO_SHORT" then
+    return "TOO_SHORT"
+  end
   local dataLength = expandVint(data, t_offset, t_offset + sizeLength);
   return {
     offset = t_offset + sizeLength,
@@ -74,13 +86,19 @@ local function readTagDataSize(data, t_offset)
   };
 end
 
-local function _checkHead(data) if string.sub(data, 1, 8) ~= "OpusHead" then error('Audio codec is not Opus!') end end
+local function _checkHead(data)
+  if string.sub(data, 1, 8) ~= "OpusHead" then
+    error('Audio codec is not Opus!')
+  end
+end
 
 local function readTag(data, offset)
   local pass = 0
   p('Offset: ', offset)
   local idData = readEBMLId(data, offset)
-  if idData == "TOO_SHORT" then return "TOO_SHORT" end
+  if idData == "TOO_SHORT" then
+    return "TOO_SHORT"
+  end
   pass = pass + 1
   local ebmlID = idData.id
   if not ebmlFound then
@@ -95,17 +113,18 @@ local function readTag(data, offset)
 
   -- Read header tag data size
   local sizeData = readTagDataSize(data, offset)
-  if sizeData == "TOO_SHORT" then return "TOO_SHORT" end
+  if sizeData == "TOO_SHORT" then
+    return "TOO_SHORT"
+  end
   pass = pass + 1
   offset = sizeData.offset
 
   local dataLength = sizeData.dataLength
 
   if type(TAGS[ebmlID]) == "nil" then
-    if #data > offset + dataLength then return {
-      offset = offset + dataLength,
-      pass = pass,
-    }; end
+    if #data > offset + dataLength then
+      return { offset = offset + dataLength, pass = pass };
+    end
     p('Skip util lol')
     return {
       offset = offset,
@@ -116,23 +135,37 @@ local function readTag(data, offset)
   pass = pass + 1
 
   local tagHasChildren = TAGS[ebmlID];
-  if tagHasChildren then return { offset = offset, pass = pass }; end
+  if tagHasChildren then
+    return { offset = offset, pass = pass };
+  end
   pass = pass + 1
 
-  if offset + dataLength > #data then return 'TOO_SHORT' end
+  if offset + dataLength > #data then
+    return 'TOO_SHORT'
+  end
   pass = pass + 1
   local process_data = string.sub(data, offset, offset + dataLength)
   if not _track then
-    if ebmlID == '\174' then _incompleteTrack = {} end
-    if ebmlID == '\215' then _incompleteTrack.number = string.byte(process_data, 1, 1) end
-    if ebmlID == '\131' then _incompleteTrack.type = string.byte(process_data, 1, 1) end
-    if _incompleteTrack.type == 2 and _incompleteTrack.number then _track = _incompleteTrack; end
+    if ebmlID == '\174' then
+      _incompleteTrack = {}
+    end
+    if ebmlID == '\215' then
+      _incompleteTrack.number = string.byte(process_data, 1, 1)
+    end
+    if ebmlID == '\131' then
+      _incompleteTrack.type = string.byte(process_data, 1, 1)
+    end
+    if _incompleteTrack.type == 2 and _incompleteTrack.number then
+      _track = _incompleteTrack;
+    end
   end
 
   if ebmlID == 'c\162' then
     _checkHead(process_data)
   elseif ebmlID == '\163' then
-    if not _track then error('No audio track in this webm!') end
+    if not _track then
+      error('No audio track in this webm!')
+    end
     if bit.band(string.byte(process_data, 1, 1), 0xF) == _track.number then
       table.insert(processed, string.sub(process_data, 5, #process_data - 1))
     end

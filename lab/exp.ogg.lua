@@ -47,7 +47,9 @@ local function readTableByTable(buffer)
     local x = 255
 
     while x == 255 do
-      if i > #seg_table then return false end
+      if i > #seg_table then
+        return false
+      end
       x = string.byte(seg_table, i) -- string.byte returns the byte value at position i
       i = i + 1
       size = size + x
@@ -114,7 +116,9 @@ local fs = require('fs')
 local fileData = fs.readFileSync("./lab/sample/speech.ogg")
 
 local temp = nil
-while #fileData > current_offset do temp = readTableByTable(temp and temp or fileData) end
+while #fileData > current_offset do
+  temp = readTableByTable(temp and temp or fileData)
+end
 
 p('Total valid segments: ', #valid_segments)
 p('Total invalid segments: ', #invalid_segments)

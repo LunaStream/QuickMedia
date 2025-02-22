@@ -19,16 +19,24 @@ function CustomReadableTransform:_transform(chunk, done)
 end
 
 function CustomReadableTransform:exRead()
-  if self.is_stream_end then return nil end
+  if self.is_stream_end then
+    return nil
+  end
   local res = self.buffer_cache[1]
   table.remove(self.buffer_cache, 1)
-  if #self.buffer_cache == 0 then self.is_stream_end = true end
+  if #self.buffer_cache == 0 then
+    self.is_stream_end = true
+  end
   return res
 end
 
 local te = CustomReadableTransform:new()
 
-te:on('end', function() print('Finished transform') end)
+te:on(
+  'end', function()
+    print('Finished transform')
+  end
+)
 
 local pre_stream = fs.createReadStream('./lab/sample/speech.ogg'):pipe(prism_opus.OggDemuxer:new()):pipe(te)
 
@@ -37,7 +45,9 @@ setInterval(
     coroutine.wrap(
       function()
         local res = pre_stream:exRead()
-        if res then p(#res, res) end
+        if res then
+          p(#res, res)
+        end
       end
     )()
   end
