@@ -23,22 +23,16 @@ local TAGS = {
 }
 
 local function vintLength(buffer, index)
-  if index < 1 or index > #buffer then
-    return "TOO_SHORT"
-  end
+  if index < 1 or index > #buffer then return "TOO_SHORT" end
 
   local i = 0
   for j = 0, 7 do
-    if bit.band(bit.lshift(1, 7 - j), string.byte(buffer, index)) ~= 0 then
-      break
-    end
+    if bit.band(bit.lshift(1, 7 - j), string.byte(buffer, index)) ~= 0 then break end
     i = i + 1
   end
   i = i + 1
 
-  if index + i - 1 > #buffer then
-    return "TOO_SHORT"
-  end
+  if index + i - 1 > #buffer then return "TOO_SHORT" end
 
   return i
 end
@@ -47,16 +41,14 @@ end
 -- You can also use other libraries like lua-bitop in Lua 5.1 if needed
 
 local function expandVint(buffer, start, _end)
-  local length = vintLength(buffer, start)  -- Assuming vintLength returns the length
-  if _end > #buffer or length == "TOO_SHORT" then
-      return "TOO_SHORT"
-  end
+  local length = vintLength(buffer, start) -- Assuming vintLength returns the length
+  if _end > #buffer or length == "TOO_SHORT" then return "TOO_SHORT" end
 
-  local mask = (bit.lshift(1, 8 - length)) - 1  -- bit32.lshift for bit shifting
-  local value = bit.band(string.byte(buffer, start), mask)  -- band for bitwise AND
+  local mask = (bit.lshift(1, 8 - length)) - 1 -- bit32.lshift for bit shifting
+  local value = bit.band(string.byte(buffer, start), mask) -- band for bitwise AND
 
   for i = start + 1, _end - 1 do
-      value = bit.lshift(value, 8) + string.byte(buffer, i)  -- left shift by 8, then add next byte
+    value = bit.lshift(value, 8) + string.byte(buffer, i) -- left shift by 8, then add next byte
   end
 
   return value
@@ -78,13 +70,11 @@ local function readTagDataSize(data, t_offset)
   return {
     offset = t_offset + sizeLength,
     dataLength = dataLength,
-    sizeLength = sizeLength
+    sizeLength = sizeLength,
   };
 end
 
-local function _checkHead(data)
-  if string.sub(data, 1, 8) ~= "OpusHead" then error('Audio codec is not Opus!') end
-end
+local function _checkHead(data) if string.sub(data, 1, 8) ~= "OpusHead" then error('Audio codec is not Opus!') end end
 
 local function readTag(data, offset)
   local pass = 0
@@ -94,8 +84,11 @@ local function readTag(data, offset)
   pass = pass + 1
   local ebmlID = idData.id
   if not ebmlFound then
-    if ebmlID == "\026E\223\163" then ebmlFound = true
-    else error('Did not find the EBML tag at the start of the stream') end
+    if ebmlID == "\026E\223\163" then
+      ebmlFound = true
+    else
+      error('Did not find the EBML tag at the start of the stream')
+    end
   end
 
   offset = idData.offset
@@ -109,18 +102,21 @@ local function readTag(data, offset)
   local dataLength = sizeData.dataLength
 
   if type(TAGS[ebmlID]) == "nil" then
-    if #data > offset + dataLength then
-      return { offset = offset + dataLength, pass = pass };
-    end
+    if #data > offset + dataLength then return {
+      offset = offset + dataLength,
+      pass = pass,
+    }; end
     p('Skip util lol')
-    return { offset = offset, skipUntil = count + offset + dataLength, pass = pass };
+    return {
+      offset = offset,
+      skipUntil = count + offset + dataLength,
+      pass = pass,
+    };
   end
   pass = pass + 1
 
   local tagHasChildren = TAGS[ebmlID];
-  if tagHasChildren then
-    return { offset = offset, pass = pass };
-  end
+  if tagHasChildren then return { offset = offset, pass = pass }; end
   pass = pass + 1
 
   if offset + dataLength > #data then return 'TOO_SHORT' end
@@ -128,15 +124,9 @@ local function readTag(data, offset)
   local process_data = string.sub(data, offset, offset + dataLength)
   if not _track then
     if ebmlID == '\174' then _incompleteTrack = {} end
-    if ebmlID == '\215' then
-      _incompleteTrack.number = string.byte(process_data, 1, 1)
-    end
-    if ebmlID == '\131' then
-      _incompleteTrack.type = string.byte(process_data, 1, 1)
-    end
-    if _incompleteTrack.type == 2 and _incompleteTrack.number then
-      _track = _incompleteTrack;
-    end
+    if ebmlID == '\215' then _incompleteTrack.number = string.byte(process_data, 1, 1) end
+    if ebmlID == '\131' then _incompleteTrack.type = string.byte(process_data, 1, 1) end
+    if _incompleteTrack.type == 2 and _incompleteTrack.number then _track = _incompleteTrack; end
   end
 
   if ebmlID == 'c\162' then
@@ -165,10 +155,13 @@ while result ~= "TOO_SHORT" do
     p('TOO_SHORT detected! Watch your eyes mf')
     break
   end
-  if result.offset then g_offset = result.offset
-  -- if result.skipUntil then
-  --   skipUtil = result.skipUntil;
-  else break end
+  if result.offset then
+    g_offset = result.offset
+    -- if result.skipUntil then
+    --   skipUtil = result.skipUntil;
+  else
+    break
+  end
 end
 
 p()

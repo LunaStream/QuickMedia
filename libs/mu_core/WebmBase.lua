@@ -24,9 +24,7 @@ function WebmBase:initialize()
   self._incompleteTrack = {}
   self.remind_buffer = nil
   self.chunk_debug = nil
-  self:on('end', function ()
-    coroutine.wrap(self.freeMem)(self)
-  end)
+  self:on('end', function() coroutine.wrap(self.freeMem)(self) end)
 end
 
 function WebmBase:freeMem()
@@ -41,9 +39,7 @@ function WebmBase:freeMem()
   collectgarbage("collect")
 end
 
-function WebmBase:_checkHead(data)
-  error('checkHead not yet implemented')
-end
+function WebmBase:_checkHead(data) error('checkHead not yet implemented') end
 
 function WebmBase:_transform(chunk, done)
   if type(chunk) ~= "string" then
@@ -78,15 +74,16 @@ function WebmBase:_transform(chunk, done)
       done(result)
       return
     end
-    if result == "TOO_SHORT" then
-      break
-    end
+    if result == "TOO_SHORT" then break end
     if result.skipUntil then
       self.skipUntil = result.skipUntil
       break
     end
-    if result.offset then offset = result.offset
-    else break end
+    if result.offset then
+      offset = result.offset
+    else
+      break
+    end
   end
 
   self.count = self.count + offset
@@ -100,8 +97,11 @@ function WebmBase:readTag(data, offset)
   if idData == "TOO_SHORT" then return "TOO_SHORT" end
   local ebmlID = idData.id
   if not self.ebmlFound then
-    if ebmlID == "\026E\223\163" then self.ebmlFound = true
-    else error('Did not find the EBML tag at the start of the stream') end
+    if ebmlID == "\026E\223\163" then
+      self.ebmlFound = true
+    else
+      error('Did not find the EBML tag at the start of the stream')
+    end
   end
 
   offset = idData.offset
@@ -114,30 +114,20 @@ function WebmBase:readTag(data, offset)
   local dataLength = sizeData.dataLength
 
   if type(TAGS[ebmlID]) == "nil" then
-    if #data > offset + dataLength then
-      return { offset = offset + dataLength }
-    end
+    if #data > offset + dataLength then return { offset = offset + dataLength } end
     return { offset = offset, skipUntil = self.count + offset + dataLength + 1 }
   end
 
   local tagHasChildren = TAGS[ebmlID]
-  if tagHasChildren then
-    return { offset = offset }
-  end
+  if tagHasChildren then return { offset = offset } end
 
   if (dataLength == 'TOO_SHORT') or (offset + dataLength > #data) then return 'TOO_SHORT' end
   local process_data = string.sub(data, offset, offset + dataLength)
   if not self._track then
     if ebmlID == '\174' then self._incompleteTrack = {} end
-    if ebmlID == '\215' then
-      self._incompleteTrack.number = string.byte(process_data, 1, 1)
-    end
-    if ebmlID == '\131' then
-      self._incompleteTrack.type = string.byte(process_data, 1, 1)
-    end
-    if self._incompleteTrack.type == 2 and self._incompleteTrack.number then
-      self._track = self._incompleteTrack
-    end
+    if ebmlID == '\215' then self._incompleteTrack.number = string.byte(process_data, 1, 1) end
+    if ebmlID == '\131' then self._incompleteTrack.type = string.byte(process_data, 1, 1) end
+    if self._incompleteTrack.type == 2 and self._incompleteTrack.number then self._track = self._incompleteTrack end
   end
 
   if ebmlID == 'c\162' then
@@ -168,42 +158,34 @@ function WebmBase:readTagDataSize(data, t_offset)
   return {
     offset = t_offset + sizeLength,
     dataLength = dataLength,
-    sizeLength = sizeLength
+    sizeLength = sizeLength,
   }
 end
 
 function WebmBase:vintLength(buffer, index)
-  if index < 1 or index > #buffer then
-    return "TOO_SHORT"
-  end
+  if index < 1 or index > #buffer then return "TOO_SHORT" end
 
   local i = 0
   for j = 0, 7 do
-    if bit.band(bit.lshift(1, 7 - j), string.byte(buffer, index)) ~= 0 then
-      break
-    end
+    if bit.band(bit.lshift(1, 7 - j), string.byte(buffer, index)) ~= 0 then break end
     i = i + 1
   end
   i = i + 1
 
-  if index + i - 1 > #buffer then
-    return "TOO_SHORT"
-  end
+  if index + i - 1 > #buffer then return "TOO_SHORT" end
 
   return i
 end
 
 function WebmBase:expandVint(buffer, start, _end)
   local length = self:vintLength(buffer, start)
-  if _end > #buffer or length == "TOO_SHORT" then
-    return "TOO_SHORT"
-  end
+  if _end > #buffer or length == "TOO_SHORT" then return "TOO_SHORT" end
 
   local mask = (bit.lshift(1, 8 - length)) - 1
   local value = bit.band(string.byte(buffer, start), mask)
 
   for i = start + 1, _end - 1 do
-    value = bit.lshift(value, 8) + string.byte(buffer, i)  -- left shift by 8, then add next byte
+    value = bit.lshift(value, 8) + string.byte(buffer, i) -- left shift by 8, then add next byte
   end
 
   return value

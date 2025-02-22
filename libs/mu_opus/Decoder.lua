@@ -7,18 +7,14 @@ local default_options = {
   channels = 2,
   sampleRate = 48000,
   frameSize = 960,
-  maxFrameSize = 3840
+  maxFrameSize = 3840,
 }
 
 function Decoder:initialize(opus_path, options)
   Transform.initialize(self, { objectMode = true })
   self.options = options or {}
 
-  for key, value in pairs(default_options) do
-    if type(self.options[key]) == "nil" then
-      self.options[key] = value
-    end
-  end
+  for key, value in pairs(default_options) do if type(self.options[key]) == "nil" then self.options[key] = value end end
 
   if type(opus_path) == "string" then
     local opus = Opus(opus_path)
@@ -36,15 +32,9 @@ function Decoder:_transform(chunk, done)
   end
 
   local success, pcm = pcall(
-    self.decoder.decode,
-    self.decoder,
-    chunk, #chunk,
-    self.options.frameSize,
-    self.options.maxFrameSize
+    self.decoder.decode, self.decoder, chunk, #chunk, self.options.frameSize, self.options.maxFrameSize
   )
-  if not success then
-    return done(pcm)
-  end
+  if not success then return done(pcm) end
   self:push(ffi.string(pcm, self.options.maxFrameSize))
   pcm = nil
   return done();

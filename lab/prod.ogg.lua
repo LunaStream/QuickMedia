@@ -15,6 +15,4 @@ function CustomWriteStream:_transform(chunk, done)
   done(nil)
 end
 
-fs.createReadStream('./lab/sample/speech.ogg')
-  :pipe(mu_opus.OggDemuxer:new())
-  :pipe(CustomWriteStream:new())
+fs.createReadStream('./lab/sample/speech.ogg'):pipe(mu_opus.OggDemuxer:new()):pipe(CustomWriteStream:new())

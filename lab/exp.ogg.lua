@@ -47,10 +47,8 @@ local function readTableByTable(buffer)
     local x = 255
 
     while x == 255 do
-      if i > #seg_table then
-        return false
-      end
-      x = string.byte(seg_table, i)  -- string.byte returns the byte value at position i
+      if i > #seg_table then return false end
+      x = string.byte(seg_table, i) -- string.byte returns the byte value at position i
       i = i + 1
       size = size + x
     end
@@ -74,19 +72,12 @@ number_page_segments    | %s
 page_segments           | %s
 header_size             | %s]]
 
-  print(string.format(template,
-    capture_pattern,
-    version,
-    header_type_flagsion,
-    granule_position,
-    bitstream_serial_number,
-    page_sequence_number,
-    CRC_checksum,
-    number_page_segments,
-    page_segments,
-    header_size,
-    seg_table
-  ))
+  print(
+    string.format(
+      template, capture_pattern, version, header_type_flagsion, granule_position, bitstream_serial_number,
+        page_sequence_number, CRC_checksum, number_page_segments, page_segments, header_size, seg_table
+    )
+  )
   p('Total seg sizes: ', totalSize)
   p(sizes)
 
@@ -98,7 +89,8 @@ header_size             | %s]]
     local header = string.sub(segment, 1, 8)
     -- p('Preview segment: ', string.sub(segment, 1, 10))
     if head_detected then
-      if header == "OpusTags" then p('Hey, this is opus tag :O')
+      if header == "OpusTags" then
+        p('Hey, this is opus tag :O')
       elseif bitstream_serial_signature == bitstream_serial_number then
         table.insert(valid_segments, segment)
       end
@@ -122,9 +114,7 @@ local fs = require('fs')
 local fileData = fs.readFileSync("./lab/sample/speech.ogg")
 
 local temp = nil
-while #fileData > current_offset do
-  temp = readTableByTable(temp and temp or fileData)
-end
+while #fileData > current_offset do temp = readTableByTable(temp and temp or fileData) end
 
 p('Total valid segments: ', #valid_segments)
 p('Total invalid segments: ', #invalid_segments)

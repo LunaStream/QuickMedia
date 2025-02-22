@@ -16,17 +16,21 @@ function CustomWriteStream:_transform(chunk, done)
   done(nil)
 end
 
-local audioStream = fs.createReadStream('./lab/sample/videoplayback.webm')
-  :pipe(mu_opus.WebmDemuxer:new())
-  :pipe(mu_opus.Decoder:new('D:/Github/LunaStream/LunaStream/bin/opus_win32_x64.dll'))
-  
-  -- :pipe(CustomWriteStream:new())
+local audioStream = fs.createReadStream('./lab/sample/videoplayback.webm'):pipe(mu_opus.WebmDemuxer:new()):pipe(
+  mu_opus.Decoder:new(
+    'D:/Github/LunaStream/LunaStream/bin/opus_win32_x64.dll'
+  )
+)
 
-timer.setTimeout(7000, coroutine.wrap(function()
-  local pcm = mu_core.PCMStream:new()
-  pcm:on('raw-pcm-data', function (chunk)
-    p(#chunk)
-  end)
-  p('Voice EXP: Now play the song')
-  audioStream:pipe(pcm)
-end))
+-- :pipe(CustomWriteStream:new())
+
+timer.setTimeout(
+  7000, coroutine.wrap(
+    function()
+      local pcm = mu_core.PCMStream:new()
+      pcm:on('raw-pcm-data', function(chunk) p(#chunk) end)
+      p('Voice EXP: Now play the song')
+      audioStream:pipe(pcm)
+    end
+  )
+)
