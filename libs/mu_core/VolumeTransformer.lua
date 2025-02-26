@@ -1,5 +1,7 @@
 -- ported from prism-media (NODE.js) <prism-media github link here>
 
+-- TODO: Comments for methods/functions
+
 local Buffer = require("buffer")
 local stream = require("stream")
 
@@ -66,7 +68,7 @@ function VolumeTransformer:initialize(options)
     end
 
     self._bytes = self._bits / 8;
-    -- TODO: Remove/resolve math.pow warning.
+    
     self._extremum = math.pow(2, self._bits - 1)
 
     self.volume = options.volume or 1;
@@ -84,15 +86,41 @@ end
     end
 
     function VolumeTransformer:_transform(chunk, encoding, done) 
-        -- TODO
+        -- If the volume is 1, act like a passthrough stream
+        if self.volume == 1 then
+            self:push(chunk);
+            return done();
+        end
+
+        chunk = Buffer.concat(self._chunk, chunk);
+
+        if chunk.length < self._bytes then
+            return done()
+        end
+
+        local complete = math.floor(chunk.length / self._bytes) * self._bytes;
+
+        for i = 0, complete - 1, self._bytes do
+            local int = math.min(self._extremum - 1, math.max(-self._extremum, math.floor(self.volume * self:_readInt(chunk, i))))
+            self:_writeInt(chunk, int, i)
+        end
+
+        self:push(chunk:sub(1, complete))
+
+        return done()
+    end
+
+    function VolumeTransformer:_destroy()
+        self._cleanup()
+        self._chunk = nil;
     end
 
     function VolumeTransformer:setVolume(volume)
-        -- TODO
+        self.volume = volume
     end
 
     function VolumeTransformer:setVolumeDecibels(db)
-        -- TODO
+        self:setVolume(math.pow(10, db / 20))
     end
 
     function VolumeTransformer:setVolumeLogarithmic(value)
