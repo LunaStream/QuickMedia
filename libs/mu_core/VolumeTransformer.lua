@@ -126,3 +126,5 @@ end
     function VolumeTransformer:setVolumeLogarithmic(value)
         self:setVolume(math.pow(value, 1.660964))
     end
+
+return VolumeTransformer
