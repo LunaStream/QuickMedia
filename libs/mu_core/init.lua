@@ -1,1 +1,1 @@
-return { WebmBase = require('./WebmBase') }
+return { WebmBase = require('./WebmBase'), VolumeTransformer = require('./VolumeTransformer') }
