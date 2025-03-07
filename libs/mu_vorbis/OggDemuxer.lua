@@ -15,6 +15,12 @@ function OggDemuxer:initialize()
 end
 
 function OggDemuxer:_transform(chunk, done)
+  if type(chunk) ~= "string" then
+    self:push(chunk)
+    done()
+    return
+  end
+
   if self.remind_buffer and #self.remind_buffer > 0 then
     chunk = self.remind_buffer .. chunk
     self.remind_buffer = nil

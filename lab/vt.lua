@@ -1,6 +1,6 @@
 -- VolumeTransformer Test
 
-local buffer = require("buffer")
+local buffer = require("buffer").Buffer
 local VolumeTransformer = require("../libs/mu_core/VolumeTransformer")
 
 local Readable = require('stream').Readable
@@ -17,31 +17,31 @@ function AudioSource:_read()
   self:push(nil)
 end
 
-local function streamToBuffer(stream)
-    local chunks = table.pack(stream:read())
-    p(chunks)
-    return buffer.concat(chunks)
-end
+-- local function streamToBuffer(stream)
+--     local chunks = table.pack(stream:read())
+--     p(type(chunks))
+--     return chunks and buffer.concat(chunks) or 'Not avaliable'
+-- end
 
 local function writeBuffer(ints, format)
     local buf
     if format == "s16le" then
-        buf = buffer.new(#ints * 2)
+        buf = buffer:new(#ints * 2)
         for i, value in ipairs(ints) do
             buf:writeInt16LE(value, (i - 1) * 2)
         end
     elseif format == "s16be" then
-        buf = buffer.new(#ints * 2)
+        buf = buffer:new(#ints * 2)
         for i, value in ipairs(ints) do
             buf:writeInt16BE(value, (i - 1) * 2)
         end
     elseif format == "s32le" then
-        buf = buffer.new(#ints * 4)
+        buf = buffer:new(#ints * 4)
         for i, value in ipairs(ints) do
             buf:writeInt32LE(value, (i - 1) * 4)
         end
     elseif format == "s32be" then
-        buf = buffer.new(#ints * 4)
+        buf = buffer:new(#ints * 4)
         for i, value in ipairs(ints) do
             buf:writeInt32BE(value, (i - 1) * 4)
         end
@@ -52,11 +52,8 @@ local function writeBuffer(ints, format)
 end
 
 local function testVolume(type)
-    local output = AudioSource:new({ data = writeBuffer({ 1,2,3}, type) }):pipe(VolumeTransformer:new({ type = type, volume = 1}))
-
-    local buf = streamToBuffer(output)
-
-    p(buf)
+    local output = AudioSource:new({ data = writeBuffer({ 1,2,3 }, type) }):pipe(VolumeTransformer:new({ type = type, volume = 1}))
+    p(output:read())
 end
 
-p(testVolume('s16le'))
+testVolume('s16le')
