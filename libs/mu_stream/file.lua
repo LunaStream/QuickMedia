@@ -33,6 +33,9 @@ function FileStream:initialize(path, options)
     self:open()
   end
   self:on('end', bind(self.close, self))
+  self:once('close', function ()
+    self:close()
+  end)
 end
 
 function FileStream:open()

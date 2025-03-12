@@ -63,6 +63,8 @@ function Mpg123Decoder:initialize(bin_path)
 
   self._config_decoder_yet = false
   self._format_configured = false
+
+  self:once('close', function () self:close() end)
 end
 
 function Mpg123Decoder:_get_error()

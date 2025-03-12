@@ -16,6 +16,12 @@ function HTTPStream:initialize(method, url, headers, body, customOptions)
   self.reconnecting = false
   self.ended = false
   self.read_coro_running = false
+  self:once('close', function ()
+    if not self.connection.socket:is_closing() then
+      self.connection.socket:close()
+    end
+    self:restore()
+  end)
 end
 
 function HTTPStream:setup(custom_uri, redirect_count)

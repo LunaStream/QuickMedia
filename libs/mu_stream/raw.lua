@@ -7,6 +7,11 @@ function StringStream:initialize(str, chunk_size)
   self._str = str
   self.chunk_size = chunk_size or 65536
   self.runs_out = false
+
+  self:once('close', function ()
+    self._str = ''
+    self.runs_out = false
+  end)
 end
 
 function StringStream:_read(n)

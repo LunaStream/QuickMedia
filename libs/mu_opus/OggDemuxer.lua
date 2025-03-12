@@ -13,6 +13,8 @@ function OggDemuxer:initialize()
   self.bitstream_serial_number = nil
   self.head_detected = nil
   self.remind_buffer = nil
+
+  self:once('close', function () self:destroy() end)
 end
 
 function OggDemuxer:_transform(chunk, done)

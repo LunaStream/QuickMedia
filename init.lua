@@ -3,5 +3,6 @@ return {
   opus = require('mu_opus'),
   mpeg = require('mu_mpeg'),
   vorbis = require('mu_vorbis'),
-  stream = require('mu_stream')
+  stream = require('mu_stream'),
+  flac = require('mu_flac')
 }
