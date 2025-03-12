@@ -1,6 +1,5 @@
 local fs = require('fs')
 local timer = require('timer')
-local audioDecoder = require('audioDecoder')
 local mu_opus = require('mu_opus')
 local mu_stream = require('mu_stream')
 
@@ -8,7 +7,7 @@ local fd = fs.openSync('./lab/results/videoplayback.pcm', 'w+')
 
 local audioStream = mu_stream.file:new('./lab/sample/videoplayback.webm')
   :pipe(mu_opus.WebmDemuxer:new())
-  :pipe(audioDecoder.opus:new('D:/Github/LunaStream/LunaStream/bin/opus-win32-x64.dll'))
+  :pipe(MusicUtils.opus.Decoder:new('D:/Github/LunaStream/LunaStream/bin/opus-win32-x64.dll'))
 
 timer.setInterval(2, function ()
   local data = audioStream:read()
