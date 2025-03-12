@@ -6,6 +6,8 @@ return {
   license = "BSD-2-Clause",
   author = { name = "RainyXeon", email = "xeondev@xeondex.onmicrosoft.com" },
   homepage = "https://github.com/LunaStream/QuickMedia",
-  dependencies = {},
+  dependencies = {
+    "creationix/coro-http@v3.2.3",
+  },
   files = { "**.lua", "!test*", "!lab*", "!tests*", },
 }
