@@ -1,6 +1,6 @@
 local Transform = require('stream').Transform
 local ffi = require('ffi')
-local Opus = require('opus')
+local Opus = require('./Library')
 local Decoder = Transform:extend()
 
 local default_options = {
