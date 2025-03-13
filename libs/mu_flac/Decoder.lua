@@ -84,6 +84,19 @@ function Decoder:initialize(bin_path)
       FLAC__STREAM_DECODER_READ_STATUS_ABORT = 2
     } FLAC__StreamDecoderReadStatus;
 
+    typedef enum {
+      FLAC__STREAM_DECODER_SEARCH_FOR_METADATA = 0,
+      FLAC__STREAM_DECODER_READ_METADATA,
+      FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC,
+      FLAC__STREAM_DECODER_READ_FRAME,
+      FLAC__STREAM_DECODER_END_OF_STREAM,
+      FLAC__STREAM_DECODER_OGG_ERROR,
+      FLAC__STREAM_DECODER_SEEK_ERROR,
+      FLAC__STREAM_DECODER_ABORTED,
+      FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR,
+      FLAC__STREAM_DECODER_UNINITIALIZED
+    } FLAC__StreamDecoderState;
+
     typedef FLAC__StreamDecoderReadStatus (*FLAC__StreamDecoderReadCallback)(
         const FLAC__StreamDecoder *decoder,
         void *buffer, size_t *bytes,
@@ -121,7 +134,7 @@ function Decoder:initialize(bin_path)
         FLAC__StreamDecoderErrorCallback error_callback,
         void *client_data
     );
-    int FLAC__stream_decoder_process_until_end_of_stream(FLAC__StreamDecoder *decoder);
+    int FLAC__stream_decoder_get_state(FLAC__StreamDecoder *decoder);
     int FLAC__stream_decoder_process_single(FLAC__StreamDecoder *decoder);
     int FLAC__stream_decoder_finish(FLAC__StreamDecoder *decoder);
     void FLAC__stream_decoder_delete(FLAC__StreamDecoder *decoder);
@@ -159,21 +172,18 @@ end
 function Decoder:setupListener()
   -- Read request from flac lib
   local function read_callback(decoder, buffer, bytes, client_data)
-    p('>>> Read')
-    if self._is_stop then
-      bytes[0] = 0
-      return ffi.C.FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM
-    end
-
     if #self._chunk_cache == 0 then
       return ffi.C.FLAC__STREAM_DECODER_READ_STATUS_CONTINUE
     end
 
     local current_data = table.remove(self._chunk_cache, 1)
 
-    ffi.copy(buffer, current_data, #current_data)
+    if type(current_data) == "table" then
+      bytes[0] = 0
+      return ffi.C.FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM
+    end
 
-    p('remaining: ', #self._chunk_cache)
+    ffi.copy(buffer, current_data, #current_data)
 
     bytes[0] = #current_data
     return ffi.C.FLAC__STREAM_DECODER_READ_STATUS_CONTINUE
@@ -181,7 +191,6 @@ function Decoder:setupListener()
 
   -- Write response from flac library
   local function write_callback(decoder, frame, buffer, client_data)
-    p('<<< Write')
     local frame_ptr = ffi.cast("FLAC__Frame*", frame)
     local samples = frame_ptr.header.blocksize
     local channels = frame_ptr.header.channels
@@ -221,7 +230,6 @@ function Decoder:setupListener()
 
   -- Error callback
   local function error_callback(decoder, status, client_data)
-    p('Error code: ', status)
     self:close()
   end
 
@@ -246,9 +254,14 @@ function Decoder:setupListener()
 end
 
 function Decoder:_transform(chunk, done)
-  p('Hello')
   if type(chunk) ~= "string" then
     if type(chunk) == "table" then
+      table.insert(self._chunk_cache, {})
+
+      while self._lib.FLAC__stream_decoder_get_state(self._decoder) == ffi.C.FLAC__STREAM_DECODER_END_OF_STREAM do
+        self._lib.FLAC__stream_decoder_process_single(self._decoder)
+      end
+
       self:close()
     end
     self:push(chunk)
@@ -264,15 +277,14 @@ function Decoder:_transform(chunk, done)
     end
   end
 
-  self._lib.FLAC__stream_decoder_process_single(self._decoder)
-
-  return done()
+  while true do
+    if #self._chunk_cache <= 3 then return done() end
+    self._lib.FLAC__stream_decoder_process_single(self._decoder)
+  end
 end
 
 function Decoder:close()
-  self._is_stop = true
   self._lib.FLAC__stream_decoder_delete(self._decoder)
-  self._is_stop = false
 end
 
 return Decoder
