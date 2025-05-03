@@ -109,8 +109,6 @@ function HTTPStream:setup(custom_uri, redirect_count)
     connection.reset()
   end
 
-  -- Shouldn't save the connection because may cause some trouble with sable stream
-  -- If we need this in the future, this function may help: http.saveConnection(connection)
   if res.keepAlive and options.keepAlive then
     http.saveConnection(connection)
   else
@@ -142,10 +140,8 @@ function HTTPStream:getHeader(inp_key)
 end
 
 function HTTPStream:read(n)
-  -- Add _read to request data will fix the buffer lost about 80%
   self:_read()
   local data = Readable.read(self, n)
-  -- ECONNREFUSED event is experimental and not handle very well, we know that
   if #self._readableState.buffer == 0 and self.read_coro_running == true and data == nil and not self.ended then
     self:emit('ECONNREFUSED')
   end
@@ -153,34 +149,33 @@ function HTTPStream:read(n)
 end
 
 function HTTPStream:_read(n)
-  if self.ended == true then
-    return
-  end
-  coroutine.wrap(
-    function()
-      self.read_coro_running = true
+  if self.ended then return end
+  coroutine.wrap(function()
+    self.read_coro_running = true
+    for i = 1, 16 do
       local chunk = self.connection.read()
-      self.read_coro_running = false
-      -- p('HTTPStream: ', type(chunk) == "string" and #chunk or chunk)
       if type(chunk) == "string" and #chunk == 0 then
         self.ended = true
         if not self.connection.socket:is_closing() then
           self.connection.socket:close()
         end
-        return self:push({})
+        self:push({})
+        break
       elseif type(chunk) == "string" then
         self.pushed_count = self.pushed_count + #chunk
-        if self.content_length and self.content_length == self.pushed_count then
+        self:push(chunk)
+        if self.content_length and self.pushed_count >= self.content_length then
           self.ended = true
           if not self.connection.socket:is_closing() then
             self.connection.socket:close()
           end
-          return self:push({})
+          self:push({})
+          break
         end
-        return self:push(chunk)
       end
     end
-  )()
+    self.read_coro_running = false
+  end)()
 end
 
 function HTTPStream:restore()
