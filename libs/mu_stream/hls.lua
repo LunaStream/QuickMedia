@@ -14,18 +14,21 @@ function HLSStream:initialize(method, url, headers, body, customOptions)
   self.customOptions = customOptions
 	self.uri_table = {}
 	self.setup_complete = false
-  self:parse_hls(self.raw_uri)
   self.first_run = false
   self.call_stream_running = false
+  self.res = nil
 end
 
-function HLSStream:parse_hls(playlistUrl)
+function HLSStream:setup(playlistUrl)
+  playlistUrl = playlistUrl or self.raw_uri
   print("Loading HLS stream from URL: " .. playlistUrl)
 
   local res, body = HTTPDefault.request("GET", playlistUrl)
+  self.res = res
+
   if res.code ~= 200 then
     error("HTTP error in playlist: " .. res.code)
-    return
+    return self
   end
 
   local isMasterPlaylist = body:match("#EXT%-X%-STREAM%-INF")
@@ -41,24 +44,21 @@ function HLSStream:parse_hls(playlistUrl)
       end
     end
     if #playlistUrls > 0 then
-      self:parse_hls(playlistUrls[1])
+      return self:setup(playlistUrls[1])
     else
       error("No valid playlist URLs found")
     end
   else
-    local segments = {}
     for line in body:gmatch("[^\r\n]+") do
       if not line:match("^#") and line:match("%S") then
         if not line:match("^https?://") then
           local baseUrl = playlistUrl:match("(.*/)")
           line = baseUrl .. line
         end
-        table.insert(segments, line)
+        table.insert(self.uri_table, line)
       end
     end
-    for _, segUrl in ipairs(segments) do
-      table.insert(self.uri_table, segUrl)
-    end
+    return self
   end
 end
 
@@ -82,6 +82,11 @@ function HLSStream:countinuous_replace_stream(fn)
 	local get_stream_url = table.remove(self.uri_table, 1)
 
 	self.http_stream = HTTPStream:new("GET", get_stream_url, self.headers, nil, self.customOptions):setup()
+
+  if self.http_stream.res.code ~= 200 then
+    print(string.format("Segment %s failed!", get_stream_url))
+    return self:countinuous_replace_stream(fn)
+  end
 
   coroutine.wrap(fn)(self)
 
